@@ -6,4 +6,5 @@ edition = "2024"
 [dependencies]
 checked-macro = { path = "../checked-macro" }
 checked-math = { path = "../checked-math" }
+checked-lint = { path = "../checked-lint" }
 derive_more.workspace = true

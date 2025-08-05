@@ -1,17 +1,8 @@
 use quote::ToTokens;
 use syn::fold::Fold;
+use checked_lint::{checked_bin_op, checked_un_op};
 
 struct CheckedTransformer;
-
-fn checked_bin_op(op: syn::BinOp) -> bool {
-    use syn::BinOp::*;
-    matches!(op, Add(_) | Sub(_) | Mul(_) | Div(_) | Rem(_))
-}
-
-fn checked_un_op(op: syn::UnOp) -> bool {
-    use syn::UnOp::*;
-    matches!(op, Neg(_))
-}
 
 fn checked_operand<T: ToTokens>(operand: T) -> syn::Expr {
     syn::parse_quote! { checked_math::Checked::Ok(#operand) }
@@ -96,4 +87,9 @@ pub fn checked(source: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let expr = syn::parse_macro_input!(source as syn::Expr);
     let expr = CheckedTransformer.fold_expr(expr);
     return expr.to_token_stream().into();
+}
+
+#[proc_macro]
+pub fn unchecked(source: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    source
 }

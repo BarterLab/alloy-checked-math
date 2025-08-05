@@ -3,9 +3,20 @@
 version = 4
 
 [[package]]
+name = "checked-lint"
+version = "0.1.0"
+dependencies = [
+ "glob",
+ "prettyplease",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "checked-macro"
 version = "0.1.0"
 dependencies = [
+ "checked-lint",
  "proc-macro2",
  "quote",
  "syn",
@@ -50,9 +61,26 @@ dependencies = [
 name = "example"
 version = "0.1.0"
 dependencies = [
+ "checked-lint",
  "checked-macro",
  "checked-math",
  "derive_more",
+]
+
+[[package]]
+name = "glob"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a8d1add55171497b4705a648c6b583acafb01d58050a51727785f0b2c8e0a2b2"
+
+[[package]]
+name = "prettyplease"
+version = "0.2.36"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff24dfcda44452b9816fff4cd4227e1bb73ff5a2f1bc1105aa92fb8565ce44d2"
+dependencies = [
+ "proc-macro2",
+ "syn",
 ]
 
 [[package]]

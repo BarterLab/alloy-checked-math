@@ -8,5 +8,7 @@ members = [
 [workspace.dependencies]
 proc-macro2 = "1.0.95"
 quote = "1.0.40"
-syn = { version = "2.0.104", features = ["extra-traits", "fold", "full"] }
+syn = { version = "2.0.104", features = ["extra-traits", "fold", "parsing", "visit", "full"] }
 derive_more = { version = "2.0.1", features = ["from", "full"] }
+glob = "0.3.2"
+prettyplease = "0.2.36"

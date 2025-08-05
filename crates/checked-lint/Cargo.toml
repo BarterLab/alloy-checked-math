@@ -1,0 +1,10 @@
+[package]
+name = "checked-lint"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+glob.workspace = true
+prettyplease.workspace = true
+syn.workspace = true
+quote.workspace = true
