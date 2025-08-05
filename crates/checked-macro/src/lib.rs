@@ -1,4 +1,4 @@
-use quote::ToTokens as _;
+use quote::ToTokens;
 use syn::fold::Fold;
 
 struct CheckedTransformer;
@@ -13,6 +13,14 @@ fn checked_un_op(op: syn::UnOp) -> bool {
     matches!(op, Neg(_))
 }
 
+fn checked_operand<T: ToTokens>(operand: T) -> syn::Expr {
+    syn::parse_quote! { checked_math::Checked::Ok(#operand) }
+}
+
+fn tried_expr<T: ToTokens>(expr: T) -> syn::Expr {
+    syn::parse_quote! { (#expr)? }
+}
+
 impl Fold for CheckedTransformer {
     fn fold_expr(&mut self, e: syn::Expr) -> syn::Expr {
         match e {
@@ -24,9 +32,9 @@ impl Fold for CheckedTransformer {
                     return syn::Expr::Binary(binary);
                 }
 
-                *binary.left = { let left = *binary.left; syn::parse_quote! { Checked::Ok(#left) } };
-                *binary.right = { let right = *binary.right; syn::parse_quote! { Checked::Ok(#right) } };
-                return syn::parse_quote! { (#binary)? };
+                *binary.left = checked_operand(*binary.left);
+                *binary.right = checked_operand(*binary.right);
+                return tried_expr(binary);
             },
 
             syn::Expr::Unary(mut unary) => {
@@ -36,8 +44,8 @@ impl Fold for CheckedTransformer {
                     return syn::Expr::Unary(unary);
                 }
 
-                *unary.expr = { let expr = *unary.expr; syn::parse_quote! { Checked::Ok(#expr) } };
-                return syn::parse_quote! { (#unary)? };
+                *unary.expr = checked_operand(*unary.expr);
+                return tried_expr(unary);
             },
 
             syn::Expr::Array(e) => syn::Expr::Array(self.fold_expr_array(e)),

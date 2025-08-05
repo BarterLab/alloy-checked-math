@@ -3,14 +3,6 @@
 version = 4
 
 [[package]]
-name = "checked"
-version = "0.1.0"
-dependencies = [
- "checked-macro",
- "derive_more",
-]
-
-[[package]]
 name = "checked-macro"
 version = "0.1.0"
 dependencies = [
@@ -18,6 +10,10 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "checked-math"
+version = "0.1.0"
 
 [[package]]
 name = "convert_case"
@@ -48,6 +44,15 @@ dependencies = [
  "quote",
  "syn",
  "unicode-xid",
+]
+
+[[package]]
+name = "example"
+version = "0.1.0"
+dependencies = [
+ "checked-macro",
+ "checked-math",
+ "derive_more",
 ]
 
 [[package]]

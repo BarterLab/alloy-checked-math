@@ -1,3 +1,5 @@
+#![feature(try_trait_v2)]
+
 use std::ops::FromResidual;
 
 #[derive(Debug, Clone, PartialEq)]

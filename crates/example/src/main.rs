@@ -1,8 +1,4 @@
-#![feature(try_trait_v2)]
-
-mod checked;
-
-use checked::{Checked, CheckedError};
+use checked_math::CheckedError;
 use checked_macro::checked;
 
 #[derive(Debug, Clone, PartialEq, derive_more::From)]
