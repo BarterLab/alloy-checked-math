@@ -13,7 +13,7 @@ fn id(x: i32) -> Result<i32, Error> {
 }
 
 pub fn example(y: i32) -> Result<i32, Error> {
-    let x = 1 + 1;
+    let x = 1 + 1; // will be lint error here
     let z = checked! { 1 + x + -id(y + y)? };
     return Ok(z);
 }
@@ -22,13 +22,13 @@ mod qwe {
     use super::*;
 
     fn f(y: i32) {
-        let x = 1 + (y + y);
+        let x = 1 + (y + y); // will be lint error here
     }
 
     struct X;
     impl X {
         fn g() {
-            let y = 3 + 4;
+            let y = 3 + 4; // will be lint error here
             let z = unchecked! { y + 5 };
         }
     }
