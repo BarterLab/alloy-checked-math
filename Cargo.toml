@@ -1,0 +1,8 @@
+[package]
+name = "checked"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+checked-macro = { path = "checked-macro" }
+derive_more = { version = "2.0.1", features = ["from", "full"] }
