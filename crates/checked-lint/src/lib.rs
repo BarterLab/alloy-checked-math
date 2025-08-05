@@ -14,7 +14,7 @@ pub fn checked_un_op(op: syn::UnOp) -> bool {
 struct Error {
     pub current_file: std::path::PathBuf,
     pub current_fn: Option<syn::Ident>,
-    pub unchecked_expr: syn::ExprBinary,
+    pub unchecked_expr: syn::Expr,
 }
 
 struct CheckedVisitor {
@@ -46,12 +46,25 @@ impl<'ast> Visit<'ast> for CheckedVisitor {
         self.errors.push(Error {
             current_file: self.current_file.clone().unwrap(),
             current_fn: self.current_fn.clone(),
-            unchecked_expr: node.clone(),
+            unchecked_expr: syn::Expr::Binary(node.clone()),
+        });
+    }
+
+    fn visit_expr_unary(&mut self, node: &'ast syn::ExprUnary) {
+        if !checked_un_op(node.op) {
+            self.visit_expr(&node.expr);
+            return;
+        }
+
+        self.errors.push(Error {
+            current_file: self.current_file.clone().unwrap(),
+            current_fn: self.current_fn.clone(),
+            unchecked_expr: syn::Expr::Unary(node.clone()),
         });
     }
 }
 
-fn pretty_expr(expr: &syn::ExprBinary) -> String {
+fn pretty_expr(expr: &syn::Expr) -> String {
     let file = syn::File {
         shebang: None,
         attrs: vec![],

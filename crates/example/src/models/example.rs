@@ -28,6 +28,7 @@ mod qwe {
     struct X;
     impl X {
         fn g() {
+            let x = -2; // will be lint error here
             let y = 3 + 4; // will be lint error here
             let z = unchecked! { y + 5 };
         }
