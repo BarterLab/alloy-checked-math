@@ -22,7 +22,7 @@ mod qwe {
     use super::*;
 
     fn f(y: i32) {
-        let x = 1 + (y + y); // will be lint error here
+        let x = true && (1 + (y + y) == 0); // will be lint error here
     }
 
     struct X;
