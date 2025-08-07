@@ -1,0 +1,12 @@
+[package]
+name = "alloy-checked-math-example"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+derive_more.workspace = true
+alloy-primitives.workspace = true
+
+alloy-checked-math-core = { path = "../alloy-checked-math-core" }
+alloy-checked-math-macro = { path = "../alloy-checked-math-macro" }
+alloy-checked-math-lint = { path = "../alloy-checked-math-lint" }

@@ -1,5 +1,5 @@
 [package]
-name = "checked-macro"
+name = "alloy-checked-math-macro"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,7 +7,8 @@ edition = "2021"
 proc-macro2.workspace = true
 quote.workspace = true
 syn.workspace = true
-checked-lint = { path = "../checked-lint" }
+
+alloy-checked-math-lint = { path = "../alloy-checked-math-lint" }
 
 [lib]
 proc-macro = true

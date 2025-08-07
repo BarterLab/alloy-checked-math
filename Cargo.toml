@@ -6,6 +6,7 @@ members = [
 ]
 
 [workspace.dependencies]
+alloy-primitives = { version = "1.0.1", features = ["serde"]}
 proc-macro2 = "1.0.95"
 quote = "1.0.40"
 syn = { version = "2.0.104", features = ["extra-traits", "fold", "parsing", "visit", "full"] }

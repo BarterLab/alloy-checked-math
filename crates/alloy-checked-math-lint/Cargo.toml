@@ -1,5 +1,5 @@
 [package]
-name = "checked-lint"
+name = "alloy-checked-math-lint"
 version = "0.1.0"
 edition = "2024"
 

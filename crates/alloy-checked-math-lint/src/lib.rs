@@ -18,7 +18,7 @@ struct Error {
 }
 
 struct CheckedVisitor {
-    pub current_file: Option<std::path::PathBuf>,
+    pub current_file: std::path::PathBuf,
     pub current_fn: Option<syn::Ident>,
     pub errors: Vec<Error>,
 }
@@ -44,7 +44,7 @@ impl<'ast> Visit<'ast> for CheckedVisitor {
         }
 
         self.errors.push(Error {
-            current_file: self.current_file.clone().unwrap(),
+            current_file: self.current_file.clone(),
             current_fn: self.current_fn.clone(),
             unchecked_expr: syn::Expr::Binary(node.clone()),
         });
@@ -57,7 +57,7 @@ impl<'ast> Visit<'ast> for CheckedVisitor {
         }
 
         self.errors.push(Error {
-            current_file: self.current_file.clone().unwrap(),
+            current_file: self.current_file.clone(),
             current_fn: self.current_fn.clone(),
             unchecked_expr: syn::Expr::Unary(node.clone()),
         });
@@ -83,30 +83,43 @@ fn pretty_expr(expr: &syn::Expr) -> String {
         .to_string();
 }
 
-pub fn assert_checked(root_path: &std::path::Path) {
-    let mut visitor = CheckedVisitor { current_file: None, current_fn: None, errors: Vec::new() };
-
-    glob(root_path.join("**/*.rs").to_str().unwrap())
+pub fn assert_checked<P: AsRef<std::path::Path>>(root_path: P) {
+    let files = glob(root_path.as_ref().join("**/*.rs").to_str().unwrap())
         .expect("Failed to read glob pattern")
-        .filter_map(Result::ok)
-        .for_each(|path| {
-            let content = std::fs::read_to_string(&path).unwrap();
-            let source = syn::parse_str(&content).unwrap();
-            visitor.current_file = Some(path.clone());
-            visitor.visit_file(&source);
-        });
+        .filter_map(Result::ok);
 
-    if !visitor.errors.is_empty() {
-        panic!("Unchecked arithmetic found:\n{}",
-            visitor.errors.iter()
-                .map(|e| {
-                    let path = e.current_file.to_str().unwrap();
-                    let fn_ident = e.current_fn.as_ref().map(|fn_name| fn_name.to_string()).unwrap_or("unknown".to_string());
-                    let expr = pretty_expr(&e.unchecked_expr);
+    let mut errors = Vec::new();
 
-                    format!("- Path:       {path}\n  Function:   {fn_ident}\n  Expression: {expr}")
-                })
-                .collect::<Vec<_>>().join("\n")
-        );
+    for path in files {
+        print!("Checking {} ... ", path.strip_prefix(root_path.as_ref()).unwrap().display());
+
+        let mut visitor = CheckedVisitor { current_file: path.clone(), current_fn: None, errors: Vec::new() };
+        let content = std::fs::read_to_string(&path).unwrap();
+        let source = syn::parse_str(&content).unwrap();
+
+        visitor.visit_file(&source);
+
+        if visitor.errors.is_empty() {
+            println!("done");
+        } else {
+            println!("found {} unchecked arithmetic expressions", visitor.errors.len());
+        }
+
+        errors.extend(visitor.errors);
     }
+
+    if errors.is_empty() {
+        println!("No unchecked arithmetic expressions found in the codebase.");
+    } else {
+        println!("Found total {} unchecked arithmetic expressions", errors.len());
+        println!("");
+        for error in &errors {
+            println!("  - path: {}", error.current_file.strip_prefix(root_path.as_ref()).unwrap().display());
+            println!("    function: {}", error.current_fn.as_ref().map(|fn_name| fn_name.to_string()).unwrap_or("unknown".to_string()));
+            println!("    expression: {}", pretty_expr(&error.unchecked_expr));
+            println!("");
+        }
+    }
+
+    assert!(errors.is_empty(), "Unchecked arithmetic expressions found in the codebase.");
 }

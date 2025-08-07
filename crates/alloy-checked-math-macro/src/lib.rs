@@ -1,15 +1,15 @@
 use quote::ToTokens;
 use syn::fold::Fold;
-use checked_lint::{checked_bin_op, checked_un_op};
+use alloy_checked_math_lint::{checked_bin_op, checked_un_op};
 
 struct CheckedTransformer;
 
 fn checked_operand<T: ToTokens>(operand: T) -> syn::Expr {
-    syn::parse_quote! { checked_math::Checked::Ok(#operand) }
+    syn::parse_quote! { alloy_checked_math_core::Checked::Ok(#operand) }
 }
 
 fn tried_expr<T: ToTokens>(expr: T) -> syn::Expr {
-    syn::parse_quote! { (#expr)? }
+    syn::parse_quote! { #[allow(unused_parens)] (#expr)? }
 }
 
 impl Fold for CheckedTransformer {
