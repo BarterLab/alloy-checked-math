@@ -1,6 +1,6 @@
 use quote::ToTokens;
 use syn::fold::Fold;
-use alloy_checked_math_lint::{checked_bin_op, checked_un_op};
+use alloy_checked_math_lint::{checked_binary_op, checked_binary_assign_op, checked_unary_op};
 
 struct CheckedTransformer;
 
@@ -12,6 +12,42 @@ fn tried_expr<T: ToTokens>(expr: T) -> syn::Expr {
     syn::parse_quote! { #[allow(unused_parens)] (#expr)? }
 }
 
+fn checked_unary_expr(mut expr: syn::ExprUnary) -> syn::Expr {
+    *expr.expr = checked_operand(*expr.expr);
+    tried_expr(expr)
+}
+
+fn checked_binary_expr(mut expr: syn::ExprBinary) -> syn::Expr {
+    *expr.left = checked_operand(*expr.left);
+    *expr.right = checked_operand(*expr.right);
+    tried_expr(expr)
+}
+
+fn checked_binary_assign_expr(expr: syn::ExprBinary) -> syn::Expr {
+    let left = expr.left.clone();
+
+    let unassigned_binary = {
+        let mut unassigned_binary = expr.clone();
+        unassigned_binary.op = map_assign_op(expr.op);
+        checked_binary_expr(unassigned_binary)
+    };
+
+    syn::parse_quote! {
+        #left = #unassigned_binary
+    }
+}
+
+fn map_assign_op(op: syn::BinOp) -> syn::BinOp {
+    match op {
+        syn::BinOp::AddAssign(plus_eq) => syn::BinOp::Add(syn::token::Plus {spans: [plus_eq.spans[0]] }),
+        syn::BinOp::SubAssign(minus_eq) => syn::BinOp::Sub(syn::token::Minus {spans: [minus_eq.spans[0]] }),
+        syn::BinOp::MulAssign(star_eq) => syn::BinOp::Mul(syn::token::Star {spans: [star_eq.spans[0]] }),
+        syn::BinOp::DivAssign(slash_eq) => syn::BinOp::Div(syn::token::Slash {spans: [slash_eq.spans[0]] }),
+        syn::BinOp::RemAssign(percent_eq) => syn::BinOp::Rem(syn::token::Percent {spans: [percent_eq.spans[0]] }),
+        op => op
+    }
+}
+
 impl Fold for CheckedTransformer {
     fn fold_expr(&mut self, e: syn::Expr) -> syn::Expr {
         match e {
@@ -19,24 +55,25 @@ impl Fold for CheckedTransformer {
                 *binary.left = self.fold_expr(*binary.left);
                 *binary.right = self.fold_expr(*binary.right);
 
-                if !checked_bin_op(binary.op) {
-                    return syn::Expr::Binary(binary);
+                if checked_binary_op(binary.op) {
+                    return checked_binary_expr(binary);
                 }
 
-                *binary.left = checked_operand(*binary.left);
-                *binary.right = checked_operand(*binary.right);
-                return tried_expr(binary);
+                if checked_binary_assign_op(binary.op) {
+                    return checked_binary_assign_expr(binary);
+                }
+
+                return syn::Expr::Binary(binary);
             },
 
             syn::Expr::Unary(mut unary) => {
                 *unary.expr = self.fold_expr(*unary.expr);
 
-                if !checked_un_op(unary.op) {
-                    return syn::Expr::Unary(unary);
+                if checked_unary_op(unary.op) {
+                    return checked_unary_expr(unary);
                 }
 
-                *unary.expr = checked_operand(*unary.expr);
-                return tried_expr(unary);
+                return syn::Expr::Unary(unary);
             },
 
             syn::Expr::Array(e) => syn::Expr::Array(self.fold_expr_array(e)),

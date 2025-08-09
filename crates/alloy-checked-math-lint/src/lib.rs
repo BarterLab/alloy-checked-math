@@ -1,14 +1,30 @@
 use glob::glob;
 use syn::visit::Visit;
 
-pub fn checked_bin_op(op: syn::BinOp) -> bool {
-    use syn::BinOp::*;
-    matches!(op, Add(_) | Sub(_) | Mul(_) | Div(_) | Rem(_))
+pub fn checked_binary_op(op: syn::BinOp) -> bool {
+    matches!(op,
+        | syn::BinOp::Add(_)
+        | syn::BinOp::Sub(_)
+        | syn::BinOp::Mul(_)
+        | syn::BinOp::Div(_)
+        | syn::BinOp::Rem(_)
+    )
 }
 
-pub fn checked_un_op(op: syn::UnOp) -> bool {
-    use syn::UnOp::*;
-    matches!(op, Neg(_))
+pub fn checked_binary_assign_op(op: syn::BinOp) -> bool {
+    matches!(op,
+        | syn::BinOp::AddAssign(_)
+        | syn::BinOp::SubAssign(_)
+        | syn::BinOp::MulAssign(_)
+        | syn::BinOp::DivAssign(_)
+        | syn::BinOp::RemAssign(_)
+    )
+}
+
+pub fn checked_unary_op(op: syn::UnOp) -> bool {
+    matches!(op,
+        | syn::UnOp::Neg(_)
+    )
 }
 
 struct Error {
@@ -21,6 +37,16 @@ struct CheckedVisitor {
     pub current_file: std::path::PathBuf,
     pub current_fn: Option<syn::Ident>,
     pub errors: Vec<Error>,
+}
+
+impl CheckedVisitor {
+    fn push_error(&mut self, unchecked_expr: syn::Expr) {
+        self.errors.push(Error {
+            current_file: self.current_file.clone(),
+            current_fn: self.current_fn.clone(),
+            unchecked_expr,
+        });
+    }
 }
 
 fn has_checked_fn_attr(attrs: &[syn::Attribute]) -> bool {
@@ -52,30 +78,20 @@ impl<'ast> Visit<'ast> for CheckedVisitor {
     }
 
     fn visit_expr_binary(&mut self, node: &'ast syn::ExprBinary) {
-        if !checked_bin_op(node.op) {
-            self.visit_expr(&node.left);
-            self.visit_expr(&node.right);
-            return;
+        if checked_binary_op(node.op) || checked_binary_assign_op(node.op) {
+            return self.push_error(syn::Expr::Binary(node.clone()));
         }
 
-        self.errors.push(Error {
-            current_file: self.current_file.clone(),
-            current_fn: self.current_fn.clone(),
-            unchecked_expr: syn::Expr::Binary(node.clone()),
-        });
+        self.visit_expr(&node.left);
+        self.visit_expr(&node.right);
     }
 
     fn visit_expr_unary(&mut self, node: &'ast syn::ExprUnary) {
-        if !checked_un_op(node.op) {
-            self.visit_expr(&node.expr);
-            return;
+        if checked_unary_op(node.op) {
+            return self.push_error(syn::Expr::Unary(node.clone()));
         }
 
-        self.errors.push(Error {
-            current_file: self.current_file.clone(),
-            current_fn: self.current_fn.clone(),
-            unchecked_expr: syn::Expr::Unary(node.clone()),
-        });
+        self.visit_expr(&node.expr);
     }
 }
 

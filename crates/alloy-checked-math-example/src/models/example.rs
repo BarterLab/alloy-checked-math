@@ -49,6 +49,12 @@ fn div_unchecked(x: i32, y: i32) -> i32 {
     x / y
 }
 
+#[checked_fn]
+fn div_assign(mut x: i32, y: i32) -> Result<i32, Error> {
+    x /= y;
+    Ok(x)
+}
+
 #[cfg(test)]
 #[test]
 fn example_test() {
@@ -56,4 +62,7 @@ fn example_test() {
 
     assert_eq!(div(10, 2), Ok(5));
     assert_eq!(div(10, 0), Err(Error::CheckedMathError(CheckedMathError::Div)));
+
+    assert_eq!(div_assign(10, 2), Ok(5));
+    assert_eq!(div_assign(10, 0), Err(Error::CheckedMathError(CheckedMathError::Div)));
 }
