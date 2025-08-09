@@ -23,14 +23,29 @@ struct CheckedVisitor {
     pub errors: Vec<Error>,
 }
 
+fn has_checked_fn_attr(attrs: &[syn::Attribute]) -> bool {
+    attrs.iter().any(|attr| false
+        || attr.path().is_ident("checked_fn")
+        || attr.path().is_ident("unchecked_fn")
+    )
+}
+
 impl<'ast> Visit<'ast> for CheckedVisitor {
     fn visit_item_fn(&mut self, i: &'ast syn::ItemFn) {
+        if has_checked_fn_attr(&i.attrs) {
+            return;
+        }
+
         self.current_fn = Some(i.sig.ident.clone());
         syn::visit::visit_block(self, &i.block);
         self.current_fn = None;
     }
 
     fn visit_impl_item_fn(&mut self, i: &'ast syn::ImplItemFn) {
+        if has_checked_fn_attr(&i.attrs) {
+            return;
+        }
+
         self.current_fn = Some(i.sig.ident.clone());
         syn::visit::visit_block(self, &i.block);
         self.current_fn = None;

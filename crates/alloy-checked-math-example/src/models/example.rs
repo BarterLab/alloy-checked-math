@@ -4,7 +4,7 @@ use alloy_primitives::aliases::*;
 use std::str::FromStr as _;
 
 use alloy_checked_math_core::CheckedMathError;
-use alloy_checked_math_macro::{unchecked, checked};
+use alloy_checked_math_macro::{unchecked, checked, checked_fn, unchecked_fn};
 
 #[derive(Debug, Clone, PartialEq, derive_more::From)]
 pub enum Error {
@@ -39,8 +39,21 @@ mod qwe {
     }
 }
 
+#[checked_fn]
+fn div(x: i32, y: i32) -> Result<i32, Error> {
+    return Ok(x / y);
+}
+
+#[unchecked_fn]
+fn div_unchecked(x: i32, y: i32) -> i32 {
+    x / y
+}
+
 #[cfg(test)]
 #[test]
 fn example_test() {
     assert_eq!(example(I32::from_str("3").unwrap()), Ok(I32::from_str("-3").unwrap()));
+
+    assert_eq!(div(10, 2), Ok(5));
+    assert_eq!(div(10, 0), Err(Error::CheckedMathError(CheckedMathError::Div)));
 }

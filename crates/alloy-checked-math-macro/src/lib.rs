@@ -89,7 +89,19 @@ pub fn checked(source: proc_macro::TokenStream) -> proc_macro::TokenStream {
     return expr.to_token_stream().into();
 }
 
+#[proc_macro_attribute]
+pub fn checked_fn(_: proc_macro::TokenStream, source: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let func = syn::parse_macro_input!(source as syn::ItemFn);
+    let func = CheckedTransformer.fold_item_fn(func);
+    return func.to_token_stream().into();
+}
+
 #[proc_macro]
 pub fn unchecked(source: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    source
+}
+
+#[proc_macro_attribute]
+pub fn unchecked_fn(_: proc_macro::TokenStream, source: proc_macro::TokenStream) -> proc_macro::TokenStream {
     source
 }
