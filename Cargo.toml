@@ -6,10 +6,10 @@ members = [
 ]
 
 [workspace.dependencies]
-alloy-primitives = { version = "1.0.1", features = ["serde"]}
-proc-macro2 = "1.0"
-quote = "1.0"
-syn = { version = "2.0", features = ["extra-traits", "fold", "parsing", "visit", "full"] }
-derive_more = { version = "2.0", features = ["from", "full"] }
-glob = "0.3"
-prettyplease = "0.2"
+alloy-primitives = { version = "1.0.1", default-features = false }
+proc-macro2 = { version = "1.0", default-features = false }
+quote = { version = "1.0", default-features = false }
+syn = { version = "2.0", default-features = false, features = ["full", "parsing", "fold", "visit", "clone-impls", "printing"] }
+derive_more = { version = "2.0", default-features = false, features = ["from"] }
+glob = { version = "0.3", default-features = false }
+prettyplease = { version = "0.2", default-features = false }
