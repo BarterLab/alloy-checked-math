@@ -1,11 +1,36 @@
 use quote::ToTokens;
 use syn::fold::Fold;
-use alloy_checked_math_lint::{checked_binary_op, checked_binary_assign_op, checked_unary_op};
 
 struct CheckedTransformer;
 
+fn is_checked_binary_op(op: syn::BinOp) -> bool {
+    matches!(op,
+        | syn::BinOp::Add(_)
+        | syn::BinOp::Sub(_)
+        | syn::BinOp::Mul(_)
+        | syn::BinOp::Div(_)
+        | syn::BinOp::Rem(_)
+    )
+}
+
+fn is_checked_binary_assign_op(op: syn::BinOp) -> bool {
+    matches!(op,
+        | syn::BinOp::AddAssign(_)
+        | syn::BinOp::SubAssign(_)
+        | syn::BinOp::MulAssign(_)
+        | syn::BinOp::DivAssign(_)
+        | syn::BinOp::RemAssign(_)
+    )
+}
+
+fn is_checked_unary_op(op: syn::UnOp) -> bool {
+    matches!(op,
+        | syn::UnOp::Neg(_)
+    )
+}
+
 fn checked_operand<T: ToTokens>(operand: T) -> syn::Expr {
-    syn::parse_quote! { alloy_checked_math_core::Checked::Ok(#operand) }
+    syn::parse_quote! { alloy_checked_math::Checked::Ok(#operand) }
 }
 
 fn tried_expr<T: ToTokens>(expr: T) -> syn::Expr {
@@ -55,11 +80,11 @@ impl Fold for CheckedTransformer {
                 *binary.left = self.fold_expr(*binary.left);
                 *binary.right = self.fold_expr(*binary.right);
 
-                if checked_binary_op(binary.op) {
+                if is_checked_binary_op(binary.op) {
                     return checked_binary_expr(binary);
                 }
 
-                if checked_binary_assign_op(binary.op) {
+                if is_checked_binary_assign_op(binary.op) {
                     return checked_binary_assign_expr(binary);
                 }
 
@@ -69,7 +94,7 @@ impl Fold for CheckedTransformer {
             syn::Expr::Unary(mut unary) => {
                 *unary.expr = self.fold_expr(*unary.expr);
 
-                if checked_unary_op(unary.op) {
+                if is_checked_unary_op(unary.op) {
                     return checked_unary_expr(unary);
                 }
 

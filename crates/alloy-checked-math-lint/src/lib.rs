@@ -1,27 +1,19 @@
+use std::vec;
+
 use glob::glob;
 use syn::visit::Visit;
 
-pub fn checked_binary_op(op: syn::BinOp) -> bool {
+fn is_checked_binary_op(op: syn::BinOp) -> bool {
     matches!(op,
-        | syn::BinOp::Add(_)
-        | syn::BinOp::Sub(_)
-        | syn::BinOp::Mul(_)
-        | syn::BinOp::Div(_)
-        | syn::BinOp::Rem(_)
+        | syn::BinOp::Add(_) | syn::BinOp::AddAssign(_)
+        | syn::BinOp::Sub(_) | syn::BinOp::SubAssign(_)
+        | syn::BinOp::Mul(_) | syn::BinOp::MulAssign(_)
+        | syn::BinOp::Div(_) | syn::BinOp::DivAssign(_)
+        | syn::BinOp::Rem(_) | syn::BinOp::RemAssign(_)
     )
 }
 
-pub fn checked_binary_assign_op(op: syn::BinOp) -> bool {
-    matches!(op,
-        | syn::BinOp::AddAssign(_)
-        | syn::BinOp::SubAssign(_)
-        | syn::BinOp::MulAssign(_)
-        | syn::BinOp::DivAssign(_)
-        | syn::BinOp::RemAssign(_)
-    )
-}
-
-pub fn checked_unary_op(op: syn::UnOp) -> bool {
+fn is_checked_unary_op(op: syn::UnOp) -> bool {
     matches!(op,
         | syn::UnOp::Neg(_)
     )
@@ -78,7 +70,7 @@ impl<'ast> Visit<'ast> for CheckedVisitor {
     }
 
     fn visit_expr_binary(&mut self, node: &'ast syn::ExprBinary) {
-        if checked_binary_op(node.op) || checked_binary_assign_op(node.op) {
+        if is_checked_binary_op(node.op) {
             return self.push_error(syn::Expr::Binary(node.clone()));
         }
 
@@ -87,7 +79,7 @@ impl<'ast> Visit<'ast> for CheckedVisitor {
     }
 
     fn visit_expr_unary(&mut self, node: &'ast syn::ExprUnary) {
-        if checked_unary_op(node.op) {
+        if is_checked_unary_op(node.op) {
             return self.push_error(syn::Expr::Unary(node.clone()));
         }
 
@@ -115,14 +107,23 @@ fn pretty_expr(expr: &syn::Expr) -> String {
 }
 
 pub fn assert_checked<P: AsRef<std::path::Path>>(root_path: P) {
-    let files = glob(root_path.as_ref().join("**/*.rs").to_str().unwrap())
-        .expect("Failed to read glob pattern")
-        .filter_map(Result::ok);
+    let root_path = root_path.as_ref();
+
+    assert!(root_path.exists(), "Root path does not exist");
+
+    let files = if root_path.is_file() {
+        vec![root_path.to_path_buf()]
+    } else {
+        glob(root_path.join("**/*.rs").to_str().unwrap())
+            .expect("Failed to read glob pattern")
+            .filter_map(Result::ok)
+            .collect()
+    };
 
     let mut errors = Vec::new();
 
     for path in files {
-        print!("Checking {} ... ", path.strip_prefix(root_path.as_ref()).unwrap().display());
+        print!("Checking {} ... ", path.strip_prefix(root_path).unwrap().display());
 
         let mut visitor = CheckedVisitor { current_file: path.clone(), current_fn: None, errors: Vec::new() };
         let content = std::fs::read_to_string(&path).unwrap();
@@ -145,7 +146,7 @@ pub fn assert_checked<P: AsRef<std::path::Path>>(root_path: P) {
         println!("Found total {} unchecked arithmetic expressions", errors.len());
         println!("");
         for error in &errors {
-            println!("  - path: {}", error.current_file.strip_prefix(root_path.as_ref()).unwrap().display());
+            println!("  - path: {}", error.current_file.strip_prefix(root_path).unwrap().display());
             println!("    function: {}", error.current_fn.as_ref().map(|fn_name| fn_name.to_string()).unwrap_or("unknown".to_string()));
             println!("    expression: {}", pretty_expr(&error.unchecked_expr));
             println!("");
@@ -153,4 +154,23 @@ pub fn assert_checked<P: AsRef<std::path::Path>>(root_path: P) {
     }
 
     assert!(errors.is_empty(), "Unchecked arithmetic expressions found in the codebase.");
+}
+
+#[macro_export]
+macro_rules! assert_checked_subtree {
+    () => {
+        {
+            let mut get_root_cargo_toml_command = std::process::Command::new("cargo");
+            get_root_cargo_toml_command.arg("locate-project").args(["--message-format", "plain"]).arg("--workspace");
+            let root_cargo_toml = get_root_cargo_toml_command.output().expect("Failed to execute command");
+            let root_cargo_toml = std::path::PathBuf::from(String::from_utf8(root_cargo_toml.stdout).unwrap().trim_end());
+            let workspace_root = root_cargo_toml.parent().unwrap();
+
+            let current_mod_relative_path = std::path::PathBuf::from(file!());
+            let current_mod_root = workspace_root.join(current_mod_relative_path);
+            let current_mod_root = current_mod_root.parent().unwrap();
+
+            alloy_checked_math::assert_checked(&current_mod_root);
+        }
+    };
 }

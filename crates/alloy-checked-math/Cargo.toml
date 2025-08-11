@@ -1,0 +1,13 @@
+[package]
+name = "alloy-checked-math"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+alloy-checked-math-core = { path = "../alloy-checked-math-core" }
+alloy-checked-math-macro = { path = "../alloy-checked-math-macro" }
+alloy-checked-math-lint = { path = "../alloy-checked-math-lint", optional = true }
+
+[features]
+default = []
+lint = ["dep:alloy-checked-math-lint"]

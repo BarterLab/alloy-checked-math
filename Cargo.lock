@@ -3,6 +3,15 @@
 version = 4
 
 [[package]]
+name = "alloy-checked-math"
+version = "0.1.0"
+dependencies = [
+ "alloy-checked-math-core",
+ "alloy-checked-math-lint",
+ "alloy-checked-math-macro",
+]
+
+[[package]]
 name = "alloy-checked-math-core"
 version = "0.1.0"
 dependencies = [
@@ -13,9 +22,7 @@ dependencies = [
 name = "alloy-checked-math-example"
 version = "0.1.0"
 dependencies = [
- "alloy-checked-math-core",
- "alloy-checked-math-lint",
- "alloy-checked-math-macro",
+ "alloy-checked-math",
  "alloy-primitives",
  "derive_more",
 ]
@@ -34,7 +41,6 @@ dependencies = [
 name = "alloy-checked-math-macro"
 version = "0.1.0"
 dependencies = [
- "alloy-checked-math-lint",
  "proc-macro2",
  "quote",
  "syn 2.0.104",

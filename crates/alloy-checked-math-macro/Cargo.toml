@@ -8,7 +8,5 @@ proc-macro2.workspace = true
 quote.workspace = true
 syn.workspace = true
 
-alloy-checked-math-lint = { path = "../alloy-checked-math-lint" }
-
 [lib]
 proc-macro = true
