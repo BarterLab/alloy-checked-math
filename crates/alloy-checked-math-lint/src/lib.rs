@@ -107,12 +107,14 @@ fn pretty_expr(expr: &syn::Expr) -> String {
 }
 
 pub fn assert_checked<P: AsRef<std::path::Path>>(root_path: P) {
-    let root_path = root_path.as_ref();
+    let mut root_path = root_path.as_ref();
 
     assert!(root_path.exists(), "Root path does not exist");
 
     let files = if root_path.is_file() {
-        vec![root_path.to_path_buf()]
+        let files = vec![root_path.to_path_buf()];
+        root_path = root_path.parent().unwrap();
+        files
     } else {
         glob(root_path.join("**/*.rs").to_str().unwrap())
             .expect("Failed to read glob pattern")
@@ -169,6 +171,24 @@ macro_rules! assert_checked_subtree {
             let current_mod_relative_path = std::path::PathBuf::from(file!());
             let current_mod_root = workspace_root.join(current_mod_relative_path);
             let current_mod_root = current_mod_root.parent().unwrap();
+
+            alloy_checked_math::assert_checked(&current_mod_root);
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! assert_checked_mod {
+    () => {
+        {
+            let mut get_root_cargo_toml_command = std::process::Command::new("cargo");
+            get_root_cargo_toml_command.arg("locate-project").args(["--message-format", "plain"]).arg("--workspace");
+            let root_cargo_toml = get_root_cargo_toml_command.output().expect("Failed to execute command");
+            let root_cargo_toml = std::path::PathBuf::from(String::from_utf8(root_cargo_toml.stdout).unwrap().trim_end());
+            let workspace_root = root_cargo_toml.parent().unwrap();
+
+            let current_mod_relative_path = std::path::PathBuf::from(file!());
+            let current_mod_root = workspace_root.join(current_mod_relative_path);
 
             alloy_checked_math::assert_checked(&current_mod_root);
         }
