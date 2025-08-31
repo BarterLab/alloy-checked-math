@@ -30,6 +30,10 @@ fn is_checked_unary_op(op: syn::UnOp) -> bool {
 }
 
 fn checked_operand<T: ToTokens>(operand: T) -> syn::Expr {
+    #[cfg(feature = "overridden_math")]
+    syn::parse_quote! { Checked::Ok(#operand) }
+
+    #[cfg(not(feature = "overridden_math"))]
     syn::parse_quote! { alloy_checked_math::Checked::Ok(#operand) }
 }
 

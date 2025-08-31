@@ -11,3 +11,4 @@ alloy-checked-math-lint = { path = "../alloy-checked-math-lint", optional = true
 [features]
 default = []
 lint = ["dep:alloy-checked-math-lint"]
+overridden_math = ["alloy-checked-math-macro/overridden_math"]

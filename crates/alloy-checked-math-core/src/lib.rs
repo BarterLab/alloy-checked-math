@@ -12,35 +12,44 @@ pub enum CheckedMathError {
     Neg,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Checked<T> {
-    Ok(T),
-    Err(CheckedMathError),
-}
+#[macro_export]
+macro_rules! define_checked {
+    (pub enum Checked<T>;) => {
+        #[derive(Debug, Clone, Copy, PartialEq)]
+        pub enum Checked<T> {
+            Ok(T),
+            Err($crate::CheckedMathError),
+        }
 
-impl<T> std::ops::FromResidual for Checked<T> {
-    fn from_residual(residual: Result<std::convert::Infallible, CheckedMathError>) -> Self {
-        match residual {
-            Ok(_) => unsafe { std::hint::unreachable_unchecked() },
-            Err(err) => Checked::Err(err),
+        impl<T> std::ops::FromResidual for Checked<T> {
+            fn from_residual(residual: Result<std::convert::Infallible, $crate::CheckedMathError>) -> Self {
+                match residual {
+                    Ok(_) => unsafe { std::hint::unreachable_unchecked() },
+                    Err(err) => Checked::Err(err),
+                }
+            }
+        }
+
+        impl<T> std::ops::Try for Checked<T> {
+            type Output = T;
+            type Residual = Result<std::convert::Infallible, $crate::CheckedMathError>;
+
+            fn from_output(output: Self::Output) -> Self {
+                Checked::Ok(output)
+            }
+
+            fn branch(self) -> std::ops::ControlFlow<Self::Residual, Self::Output> {
+                match self {
+                    Checked::Ok(value) => std::ops::ControlFlow::Continue(value),
+                    Checked::Err(err) => std::ops::ControlFlow::Break(Result::Err(err)),
+                }
+            }
         }
     }
 }
 
-impl<T> std::ops::Try for Checked<T> {
-    type Output = T;
-    type Residual = Result<std::convert::Infallible, CheckedMathError>;
-
-    fn from_output(output: Self::Output) -> Self {
-        Checked::Ok(output)
-    }
-
-    fn branch(self) -> std::ops::ControlFlow<Self::Residual, Self::Output> {
-        match self {
-            Checked::Ok(value) => std::ops::ControlFlow::Continue(value),
-            Checked::Err(err) => std::ops::ControlFlow::Break(Result::Err(err)),
-        }
-    }
+define_checked! {
+    pub enum Checked<T>;
 }
 
 macro_rules! impl_checked_math {
