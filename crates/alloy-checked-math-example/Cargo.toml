@@ -7,7 +7,7 @@ edition = "2024"
 derive_more.workspace = true
 alloy-primitives.workspace = true
 
-alloy-checked-math = { path = "../alloy-checked-math" }
+alloy-checked-math = { path = "../alloy-checked-math", default-features = false }
 
 [dev-dependencies]
-alloy-checked-math = { path = "../alloy-checked-math", features = ["lint"] }
+alloy-checked-math = { path = "../alloy-checked-math", default-features = false, features = ["lint"] }

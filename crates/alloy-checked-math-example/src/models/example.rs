@@ -3,8 +3,7 @@
 use alloy_primitives::aliases::*;
 use std::str::FromStr as _;
 
-use alloy_checked_math::Checked;
-use alloy_checked_math::{unchecked, checked, checked_fn, unchecked_fn, CheckedMathError};
+use alloy_checked_math::{checked, unchecked, checked_fn, unchecked_fn, CheckedMathError};
 
 #[derive(Debug, Clone, PartialEq, derive_more::From)]
 pub enum Error {

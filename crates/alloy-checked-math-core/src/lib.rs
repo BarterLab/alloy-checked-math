@@ -14,11 +14,34 @@ pub enum CheckedMathError {
 
 #[macro_export]
 macro_rules! define_checked {
-    (pub enum Checked<T>;) => {
+    {
+        pub enum Checked<T>;
+        pub trait CheckedPack;
+        pub trait CheckedUnpack;
+    } => {
         #[derive(Debug, Clone, Copy, PartialEq)]
         pub enum Checked<T> {
             Ok(T),
             Err($crate::CheckedMathError),
+        }
+
+        impl<T> Checked<T> {
+            pub fn result(self) -> Result<T, $crate::CheckedMathError> {
+                match self {
+                    Checked::Ok(v) => Ok(v),
+                    Checked::Err(e) => Err(e),
+                }
+            }
+        }
+
+        pub trait CheckedPack: Sized {
+            type Packed: CheckedUnpack<Unpacked = Self>;
+            fn pack(value: Self) -> Checked<Self::Packed>;
+        }
+
+        pub trait CheckedUnpack: Sized {
+            type Unpacked: CheckedPack<Packed = Self>;
+            fn unpack(value: Checked<Self>) -> Result<Self::Unpacked, $crate::CheckedMathError>;
         }
 
         impl<T> std::ops::FromResidual for Checked<T> {
@@ -50,6 +73,8 @@ macro_rules! define_checked {
 
 define_checked! {
     pub enum Checked<T>;
+    pub trait CheckedPack;
+    pub trait CheckedUnpack;
 }
 
 macro_rules! impl_checked_math {
@@ -108,6 +133,21 @@ impl_checked_math!(U0, U1, U8, U16, U24, U32, U40, U48, U56, U64, U72, U80, U88,
 impl_checked_math!(I0, I1, I8, I16, I24, I32, I40, I48, I56, I64, I72, I80, I88, I96, I104, I112, I120, I128, I136, I144, I152, I160, I168, I176, I184, I192, I200, I208, I216, I224, I232, I240, I248, I256, I512);
 impl_checked_math!(u8, u16, u32, u64, u128, usize);
 impl_checked_math!(i8, i16, i32, i64, i128);
+
+impl<T> CheckedPack for T {
+    type Packed = T;
+    fn pack(value: Self) -> Checked<Self::Packed> { Checked::Ok(value) }
+}
+
+impl<T> CheckedUnpack for T {
+    type Unpacked = T;
+    fn unpack(value: Checked<Self>) -> Result<Self::Unpacked, CheckedMathError> {
+        match value {
+            Checked::Ok(v) => Ok(v),
+            Checked::Err(e) => Err(e),
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {

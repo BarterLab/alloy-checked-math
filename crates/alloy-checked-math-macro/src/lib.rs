@@ -29,16 +29,22 @@ fn is_checked_unary_op(op: syn::UnOp) -> bool {
     )
 }
 
-fn checked_operand<T: ToTokens>(operand: T) -> syn::Expr {
+fn namespace() -> syn::Path {
     #[cfg(feature = "overridden_math")]
-    syn::parse_quote! { Checked::Ok(#operand) }
+    syn::parse_quote! { self }
 
     #[cfg(not(feature = "overridden_math"))]
-    syn::parse_quote! { alloy_checked_math::Checked::Ok(#operand) }
+    syn::parse_quote! { alloy_checked_math }
+}
+
+fn checked_operand<T: ToTokens>(operand: T) -> syn::Expr {
+    let ns = namespace();
+    syn::parse_quote! { #ns::CheckedPack::pack(#operand) }
 }
 
 fn tried_expr<T: ToTokens>(expr: T) -> syn::Expr {
-    syn::parse_quote! { #[allow(unused_parens)] (#expr)? }
+    let ns = namespace();
+    syn::parse_quote! { #ns::CheckedUnpack::unpack(#[allow(unused_parens)] (#expr))? }
 }
 
 fn checked_unary_expr(mut expr: syn::ExprUnary) -> syn::Expr {
